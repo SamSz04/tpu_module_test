@@ -26,6 +26,49 @@ class TPUFloatOperationTester:
         print(f"Device count: {jax.device_count()}")
         print(f"Local device count: {jax.local_device_count()}")
 
+    def print_test_values_description(self):
+        """打印测试值定义说明"""
+        if self.dtype == jnp.float32:
+            print("\nFP32 测试值定义:")
+            print("- nan: float('nan')")
+            print("- inf: float('inf')")
+            print("- -inf: float('-inf')")
+            print("- zero: 0.0")
+            print("- -zero: -0.0")
+            print("- normal: 1.5")
+            print("- -normal: -1.5")
+            print("- below_min: -5.0 (低于最小边界)")
+            print("- above_max: 5.0 (高于最大边界)")
+            print("- in_range: 0.5 (在范围内)")
+            print("- min_bound: -2.0 (最小边界)")
+            print("- max_bound: 2.0 (最大边界)")
+            print("- subnormal: 1e-40 (次正规数)")
+            print("- -subnormal: -1e-40")
+            print(f"- min_normal: np.finfo(np.float32).tiny (最小正规数 ≈ {np.finfo(np.float32).tiny:.8e})")
+            print("- near_overflow: 1e38 (接近溢出的值)")
+            print("- -near_overflow: -1e38")
+            print(f"- max_float: np.finfo(np.float32).max (最大浮点数 ≈ {np.finfo(np.float32).max:.7e})")
+        else:  # bfloat16
+            print("\nBF16 测试值定义:")
+            print("- nan: float('nan')")
+            print("- inf: float('inf')")
+            print("- -inf: float('-inf')")
+            print("- zero: 0.0")
+            print("- -zero: -0.0")
+            print("- normal: 1.5")
+            print("- -normal: -1.5")
+            print("- below_min: -5.0 (低于最小边界)")
+            print("- above_max: 5.0 (高于最大边界)")
+            print("- in_range: 0.5 (在范围内)")
+            print("- min_bound: -2.0 (最小边界)")
+            print("- max_bound: 2.0 (最大边界)")
+            print("- subnormal: 1e-40 (次正规数)")
+            print("- -subnormal: -1e-40")
+            print("- min_normal: 1.18e-38 (最小正规数)")
+            print("- near_overflow: 3.0e38 (接近溢出的值)")
+            print("- -near_overflow: -3.0e38")
+            print("- max_float: 3.39e38 (最大浮点数)")
+
     def create_test_values(self) -> Dict[str, jnp.ndarray]:
         """创建各种测试值"""
         values = {}
@@ -207,6 +250,7 @@ def main():
     print("#" * 80)
 
     fp32_tester = TPUFloatOperationTester(dtype=jnp.float32)
+    fp32_tester.print_test_values_description()
     fp32_results = fp32_tester.test_clamp_operations()
     fp32_tester.print_results(fp32_results, "clamp")
 
@@ -216,6 +260,7 @@ def main():
     print("#" * 80)
 
     bf16_tester = TPUFloatOperationTester(dtype=jnp.bfloat16)
+    bf16_tester.print_test_values_description()
     bf16_results = bf16_tester.test_clamp_operations()
     bf16_tester.print_results(bf16_results, "clamp")
 
@@ -244,25 +289,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    import os
-import sys
-import jax
-import jax.numpy as jnp
-import numpy as np
-from typing import Dict, List, Tuple
-
-os.environ['JAX_PLATFORM_NAME'] = 'tpu'
-
-
-class TPUFloatOperationTester:
-    def __init__(self, dtype=jnp.float32):
-        """
-        初始化TPU测试器
-        dtype: jnp.float32 or jnp.bfloat16
-        """
-        self.dtype = dtype
-
-        # 确认在TPU上运行
-        devices = jax.devices()
-        print(f"JAX devices: {devices}")
-        if not any('TPU' in str(d) for

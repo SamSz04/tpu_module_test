@@ -26,6 +26,45 @@ class TPUFloatOperationTester:
         print(f"Device count: {jax.device_count()}")
         print(f"Local device count: {jax.local_device_count()}")
 
+    def print_test_values_description(self):
+        """打印 clamps 测试值定义：clamps(x, b1, b2) -> 以 B=max(|b1|,|b2|) 对称夹取到 [-B, B]"""
+        if self.dtype == jnp.float32:
+            print("\nFP32 测试值定义（clamps: 由两个边界形成对称区间 [-B, B]，B=max(|b1|,|b2|)）：")
+            print("- nan / inf / -inf / zero / -zero")
+            print("- normal: 1.5")
+            print("- -normal: -1.5")
+            print("- large_positive: 5.0   （用于越上界）")
+            print("- large_negative: -5.0  （用于越下界）")
+            print("- small_positive: 0.5   （界内）")
+            print("- small_negative: -0.5  （界内）")
+            print("- sym_bound_1: 2.0  （边界候选）")
+            print("- sym_bound_2: 3.0  （边界候选）")
+            print("- sym_bound_3: 4.0  （边界候选）")
+            print("- subnormal: 1e-40")
+            print("- -subnormal: -1e-40")
+            print(f"- min_normal: np.finfo(np.float32).tiny （最小正规数 ≈ {np.finfo(np.float32).tiny:.8e})")
+            print("- near_overflow: 1e38")
+            print("- -near_overflow: -1e38")
+            print(f"- max_float: np.finfo(np.float32).max   （最大浮点数 ≈ {np.finfo(np.float32).max:.7e})")
+        else:
+            print("\nBF16 测试值定义（clamps: 由两个边界形成对称区间 [-B, B]，B=max(|b1|,|b2|)）：")
+            print("- nan / inf / -inf / zero / -zero")
+            print("- normal: 1.5")
+            print("- -normal: -1.5")
+            print("- large_positive: 5.0")
+            print("- large_negative: -5.0")
+            print("- small_positive: 0.5")
+            print("- small_negative: -0.5")
+            print("- sym_bound_1: 2.0")
+            print("- sym_bound_2: 3.0")
+            print("- sym_bound_3: 4.0")
+            print("- subnormal: 1e-40")
+            print("- -subnormal: -1e-40")
+            print("- min_normal: 1.18e-38")
+            print("- near_overflow: 3.0e38")
+            print("- -near_overflow: -3.0e38")
+            print("- max_float: 3.39e38")
+
     def create_test_values(self) -> Dict[str, jnp.ndarray]:
         """创建各种测试值"""
         values = {}
@@ -221,6 +260,7 @@ def main():
     print("#" * 80)
 
     fp32_tester = TPUFloatOperationTester(dtype=jnp.float32)
+    fp32_tester.print_test_values_description()
     fp32_results = fp32_tester.test_clamps_operations()
     fp32_tester.print_results(fp32_results, "clamps")
 
@@ -230,6 +270,7 @@ def main():
     print("#" * 80)
 
     bf16_tester = TPUFloatOperationTester(dtype=jnp.bfloat16)
+    bf16_tester.print_test_values_description()
     bf16_results = bf16_tester.test_clamps_operations()
     bf16_tester.print_results(bf16_results, "clamps")
 

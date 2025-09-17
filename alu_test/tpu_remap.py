@@ -26,6 +26,32 @@ class TPUFloatOperationTester:
         print(f"Device count: {jax.device_count()}")
         print(f"Local device count: {jax.local_device_count()}")
 
+    def print_test_values_description(self):
+        """打印 remap 测试值定义：remap(v, in_min, in_max, out_min, out_max)
+        公式：out = (v - in_min)/(in_max - in_min) * (out_max - out_min) + out_min"""
+        if self.dtype == jnp.float32:
+            print("\nFP32 测试值定义（remap：按线性区间映射，支持反向区间与外推）：")
+            print("- nan / inf / -inf / zero / -zero / normal / -normal")
+            print("- in_value_1: 0.5   （位于输入区间内）")
+            print("- in_value_2: 1.0   （位于输入区间内）")
+            print("- in_value_3: 2.5   （超出输入上界，用于外推）")
+            print("- in_min: 0.0, in_max: 2.0        （输入区间）")
+            print("- out_min: -1.0, out_max: 1.0     （输出区间）")
+            print("- subnormal: 1e-40 / -subnormal: -1e-40")
+            print(f"- min_normal: np.finfo(np.float32).tiny （最小正规数 ≈ {np.finfo(np.float32).tiny:.8e})")
+            print("- near_overflow: ±1e38, max_float: np.finfo(np.float32).max")
+        else:
+            print("\nBF16 测试值定义（remap：按线性区间映射，支持反向区间与外推）：")
+            print("- nan / inf / -inf / zero / -zero / normal / -normal")
+            print("- in_value_1: 0.5")
+            print("- in_value_2: 1.0")
+            print("- in_value_3: 2.5   （超出输入上界，用于外推）")
+            print("- in_min: 0.0, in_max: 2.0")
+            print("- out_min: -1.0, out_max: 1.0")
+            print("- subnormal: 1e-40 / -subnormal: -1e-40")
+            print("- min_normal: 1.18e-38")
+            print("- near_overflow: ±3.0e38, max_float: 3.39e38")
+
     def create_test_values(self) -> Dict[str, jnp.ndarray]:
         """创建各种测试值"""
         values = {}
@@ -233,6 +259,7 @@ def main():
     print("#" * 80)
 
     fp32_tester = TPUFloatOperationTester(dtype=jnp.float32)
+    fp32_tester.print_test_values_description()
     fp32_results = fp32_tester.test_remap_operations()
     fp32_tester.print_results(fp32_results, "remap")
 
@@ -242,6 +269,7 @@ def main():
     print("#" * 80)
 
     bf16_tester = TPUFloatOperationTester(dtype=jnp.bfloat16)
+    bf16_tester.print_test_values_description()
     bf16_results = bf16_tester.test_remap_operations()
     bf16_tester.print_results(bf16_results, "remap")
 

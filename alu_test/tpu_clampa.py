@@ -26,6 +26,49 @@ class TPUFloatOperationTester:
         print(f"Device count: {jax.device_count()}")
         print(f"Local device count: {jax.local_device_count()}")
 
+    def print_test_values_description(self):
+        """打印 clampa 测试值定义：clampa(x, max_abs) -> 将 x 限制到 [-|max_abs|, |max_abs|]"""
+        if self.dtype == jnp.float32:
+            print("\nFP32 测试值定义（clampa: [-|max_abs|, |max_abs|]）：")
+            print("- nan: float('nan')")
+            print("- inf: float('inf')")
+            print("- -inf: float('-inf')")
+            print("- zero: 0.0")
+            print("- -zero: -0.0")
+            print("- normal: 1.5")
+            print("- -normal: -1.5")
+            print("- large_positive: 5.0  （大于上界，用于被截到 +|max_abs|）")
+            print("- large_negative: -5.0 （小于下界，用于被截到 -|max_abs|）")
+            print("- small_positive: 0.5  （范围内）")
+            print("- small_negative: -0.5 （范围内）")
+            print("- abs_bound: 3.0      （作为 |max_abs| 的边界）")
+            print("- subnormal: 1e-40    （次正规数）")
+            print("- -subnormal: -1e-40")
+            print(f"- min_normal: np.finfo(np.float32).tiny （最小正规数 ≈ {np.finfo(np.float32).tiny:.8e})")
+            print("- near_overflow: 1e38 （接近溢出）")
+            print("- -near_overflow: -1e38")
+            print(f"- max_float: np.finfo(np.float32).max   （最大浮点数 ≈ {np.finfo(np.float32).max:.7e})")
+        else:
+            print("\nBF16 测试值定义（clampa: [-|max_abs|, |max_abs|]）：")
+            print("- nan: float('nan')")
+            print("- inf: float('inf')")
+            print("- -inf: float('-inf')")
+            print("- zero: 0.0")
+            print("- -zero: -0.0")
+            print("- normal: 1.5")
+            print("- -normal: -1.5")
+            print("- large_positive: 5.0")
+            print("- large_negative: -5.0")
+            print("- small_positive: 0.5")
+            print("- small_negative: -0.5")
+            print("- abs_bound: 3.0")
+            print("- subnormal: 1e-40")
+            print("- -subnormal: -1e-40")
+            print("- min_normal: 1.18e-38")
+            print("- near_overflow: 3.0e38")
+            print("- -near_overflow: -3.0e38")
+            print("- max_float: 3.39e38")
+
     def create_test_values(self) -> Dict[str, jnp.ndarray]:
         """创建各种测试值"""
         values = {}
@@ -209,6 +252,7 @@ def main():
     print("#" * 80)
 
     fp32_tester = TPUFloatOperationTester(dtype=jnp.float32)
+    fp32_tester.print_test_values_description()
     fp32_results = fp32_tester.test_clampa_operations()
     fp32_tester.print_results(fp32_results, "clampa")
 
@@ -218,6 +262,7 @@ def main():
     print("#" * 80)
 
     bf16_tester = TPUFloatOperationTester(dtype=jnp.bfloat16)
+    bf16_tester.print_test_values_description()
     bf16_results = bf16_tester.test_clampa_operations()
     bf16_tester.print_results(bf16_results, "clampa")
 
