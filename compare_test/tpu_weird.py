@@ -5,24 +5,24 @@ import jax.numpy as jnp
 import numpy as np
 from typing import Dict, List, Tuple
 
-os.environ['JAX_PLATFORM_NAME'] = 'tpu'
+os.environ['JAX_PLATFORM_NAME'] = 'gpu'
 
 
-class TPUFloatOperationTester:
+class GPUFloatOperationTester:
     def __init__(self, dtype=jnp.float32):
         """
-        初始化TPU测试器
+        初始化GPU测试器
         dtype: jnp.float32 or jnp.bfloat16
         """
         self.dtype = dtype
 
-        # 确认在TPU上运行
+        # 确认在GPU上运行
         devices = jax.devices()
         print(f"JAX devices: {devices}")
-        if not any('TPU' in str(d) for d in devices):
-            print("WARNING: Not running on TPU!")
+        if not any('GPU' in str(d) for d in devices):
+            print("WARNING: Not running on GPU!")
 
-        # TPU信息
+        # GPU信息
         print(f"Device count: {jax.device_count()}")
         print(f"Local device count: {jax.local_device_count()}")
 
@@ -193,7 +193,7 @@ class TPUFloatOperationTester:
         dtype_str = "fp32" if self.dtype == jnp.float32 else "bf16"
 
         print(f"\n{'=' * 60}")
-        print(f"TPU Float Operation Test")
+        print(f"GPU Float Operation Test")
         print(f"Dtype: {dtype_str}")
         print(f"Operation: {operation}")
         print(f"{'=' * 60}\n")
@@ -205,8 +205,8 @@ class TPUFloatOperationTester:
 
 
 def main():
-    """在TPU上运行所有测试"""
-    print("Starting TPU Float WEIRD Operation Tests")
+    """在GPU上运行所有测试"""
+    print("Starting GPU Float WEIRD Operation Tests")
     print(f"JAX version: {jax.__version__}")
 
     # 测试fp32
@@ -214,7 +214,7 @@ def main():
     print("Testing FP32")
     print("#" * 80)
 
-    fp32_tester = TPUFloatOperationTester(dtype=jnp.float32)
+    fp32_tester = GPUFloatOperationTester(dtype=jnp.float32)
     fp32_tester.print_test_values_description()
     fp32_results = fp32_tester.test_weird_operations()
     fp32_tester.print_results(fp32_results, "weird")
@@ -224,7 +224,7 @@ def main():
     print("Testing BF16")
     print("#" * 80)
 
-    bf16_tester = TPUFloatOperationTester(dtype=jnp.bfloat16)
+    bf16_tester = GPUFloatOperationTester(dtype=jnp.bfloat16)
     bf16_tester.print_test_values_description()
     bf16_results = bf16_tester.test_weird_operations()
     bf16_tester.print_results(bf16_results, "weird")
