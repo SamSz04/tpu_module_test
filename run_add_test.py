@@ -3,8 +3,6 @@ import pandas as pd
 import jax
 import jax.numpy as jnp
 from typing import Dict
-
-# 导入公共模块 (确保 tpu_common.py 在同级目录下)
 import tpu_common
 
 # 设置 JAX 运行平台
@@ -12,16 +10,28 @@ os.environ['JAX_PLATFORM_NAME'] = 'tpu'
 
 
 class TPUAddTester:
-    def __init__(self):
+    def __init__(self, mode='fp32'):
         tpu_common.check_tpu()
         self.value_registry: Dict[str, jnp.ndarray] = {}
+        self.mode = mode
+
+        # 根据模式选择对应的 Type 和 Dtype
+        if mode == 'bf16':
+            self.dtype = jnp.bfloat16
+            self.definitions = tpu_common.HARDCODED_VALUES_BF16
+            print("Mode: BF16 (bfloat16)")
+        else:
+            self.dtype = jnp.float32
+            self.definitions = tpu_common.HARDCODED_VALUES_FP32
+            print("Mode: FP32 (float32)")
+
         self._initialize_registry()
 
     def _initialize_registry(self):
-        """从公共模块加载定义"""
         print("Initializing value registry...")
-        for name, hex_val in tpu_common.HARDCODED_VALUES.items():
-            self.value_registry[name] = tpu_common.hex_to_f32_jax(hex_val)
+        for name, hex_val in self.definitions.items():
+            # 调用通用的 hex_to_jax，传入 self.dtype
+            self.value_registry[name] = tpu_common.hex_to_jax(hex_val, self.dtype)
         print(f"Registered {len(self.value_registry)} values.")
 
     @staticmethod
@@ -29,6 +39,7 @@ class TPUAddTester:
     def run_kernel(x, y):
         """
         定义算子: Add
+        JAX 的加法算子会自动处理 dtype (fp32+fp32 或 bf16+bf16)
         """
         return x + y
 
@@ -100,7 +111,7 @@ class TPUAddTester:
             res.block_until_ready()
 
             # 2. 转换结果为 Hex
-            actual_hex = tpu_common.f32_jax_to_hex(res)
+            actual_hex = tpu_common_fp32.f32_jax_to_hex(res)
             test_outs.append(actual_hex)
 
             # 3. 验证逻辑 (填充 result 列)
@@ -143,7 +154,9 @@ class TPUAddTester:
 
 
 if __name__ == "__main__":
-    tester = TPUAddTester()
-    # 输入文件: fp32_add.xlsx
-    # 输出文件: fp32_add_result.xlsx
-    tester.run_tests("fp32_add.xlsx", "fp32_add_result.xlsx")
+    # 实例化两个测试器，分别测试 FP32 和 BF16
+    tester_fp32 = TPUAddTester(mode='fp32')
+    tester_fp32.run_tests("fp32_add.xlsx", "fp32_add_result.xlsx")
+
+    tester_bf16 = TPUAddTester(mode='bf16')
+    tester_bf16.run_tests("bf16_add.xlsx", "bf16_add_result.xlsx")
