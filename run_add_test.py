@@ -111,7 +111,7 @@ class TPUAddTester:
             res.block_until_ready()
 
             # 2. 转换结果为 Hex
-            actual_hex = tpu_common_fp32.f32_jax_to_hex(res)
+            actual_hex = tpu_common.jax_to_hex(res)
             test_outs.append(actual_hex)
 
             # 3. 验证逻辑 (填充 result 列)
