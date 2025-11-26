@@ -163,7 +163,7 @@ class TPUFloatOperationTester:
             ('near_overflow', 'normal'),
             ('max_float', 'near_overflow'),
             ('min_normal', 'normal'),
-        ]
+        ]        
 
         # JIT编译的weird比较函数
         # weird检测是否至少有一个操作数是NaN或无穷大
