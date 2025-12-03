@@ -11,7 +11,8 @@ import logging
 # os.environ['JAX_PLATFORM_NAME'] = 'tpu'
 
 # 引入样式库
-from openpyxl.styles import PatternFill, Font
+from openpyxl.styles import PatternFill, Font, Border, Side, Alignment
+from openpyxl.utils import get_column_letter
 
 # 设置日志
 logging.basicConfig(level=logging.INFO, format='%(message)s')
@@ -138,7 +139,6 @@ def parse_test_file(filepath):
     def_start_row = -1
     test_start_row = -1
 
-    # 寻找分割行
     for i, row in df_raw.iterrows():
         row_str = " ".join([str(x).lower() for x in row.values])
         if 'type' in row_str and 'val' in row_str:
@@ -150,17 +150,23 @@ def parse_test_file(filepath):
         logger.warning(f"  [Skip] Headers not found in {os.path.basename(filepath)}")
         return None, None
 
-    # --- 提取 Definition 表 (自动剔除空列) ---
+    # --- 提取 Definition ---
     header_row_def = df_raw.iloc[def_start_row]
-    # 找到所有非 NaN 的列索引
     valid_cols_def = header_row_def.dropna().index
-    # 只提取这些列
-    df_def = df_raw.iloc[def_start_row + 1: test_start_row, valid_cols_def].copy()
-    # 重命名列
-    df_def.columns = header_row_def[valid_cols_def].astype(str).str.strip()
-    df_def = df_def.dropna(how='all')  # 去掉纯空行
 
-    # --- 提取 Test 表 (自动剔除空列) ---
+    # 截取两个 header 之间的内容
+    df_def = df_raw.iloc[def_start_row + 1: test_start_row, valid_cols_def].copy()
+    df_def.columns = header_row_def[valid_cols_def].astype(str).str.strip()
+
+    # 关键修复 2: 过滤掉内容为 "test" 的杂行
+    # 只要第一列包含 "test" 字样，就认为是分隔行，扔掉
+    if not df_def.empty:
+        mask = df_def.iloc[:, 0].astype(str).str.contains("test", case=False, na=False)
+        df_def = df_def[~mask]
+
+    df_def = df_def.dropna(how='all')
+
+    # --- 提取 Test ---
     header_row_test = df_raw.iloc[test_start_row]
     valid_cols_test = header_row_test.dropna().index
     df_test = df_raw.iloc[test_start_row + 1:, valid_cols_test].copy()
@@ -186,14 +192,11 @@ def run_single_file(filepath, output_dir):
         return
 
     dtype = get_dtype_from_filename(filename)
-
-    # 加载 (已经变紧凑了)
     df_def, df_test = parse_test_file(filepath)
     if df_def is None: return
 
     # --- 构建注册表 ---
     value_registry = {}
-    # 模糊匹配列名
     type_col = next((c for c in df_def.columns if 'type' in c.lower()), None)
     val_col = next((c for c in df_def.columns if 'val' in c.lower()), None)
 
@@ -269,11 +272,10 @@ def run_single_file(filepath, output_dir):
     # --- 保存 Excel 并应用样式 ---
     try:
         with pd.ExcelWriter(out_path, engine='openpyxl') as writer:
-            # 1. 写入 Definition (紧凑表格)
+            # 1. 写入 Definition
             df_def.to_excel(writer, sheet_name='Result', index=False, startrow=0)
 
-            # 2. 写入 Test (紧凑表格)
-            # 留 3 行空白
+            # 2. 写入 Test
             start_row_test = len(df_def) + 3
             df_test.to_excel(writer, sheet_name='Result', index=False, startrow=start_row_test)
 
@@ -281,41 +283,38 @@ def run_single_file(filepath, output_dir):
             workbook = writer.book
             sheet = writer.sheets['Result']
 
-            # 定义样式
             thin_border = Border(left=Side(style='thin'),
                                  right=Side(style='thin'),
                                  top=Side(style='thin'),
                                  bottom=Side(style='thin'))
 
-            red_font = Font(color="FF0000", bold=True)  # 纯红字，加粗
+            red_font = Font(color="FF0000", bold=True)
 
-            # 辅助函数：给区域加边框
             def set_border(min_r, max_r, min_c, max_c):
                 for row in sheet.iter_rows(min_row=min_r, max_row=max_r, min_col=min_c, max_col=max_c):
                     for cell in row:
                         cell.border = thin_border
-                        cell.alignment = Alignment(horizontal='left')  # 左对齐比较好看
+                        cell.alignment = Alignment(horizontal='left')
 
-            # 给 Definition 表加边框
+            # 画边框
             set_border(1, len(df_def) + 1, 1, len(df_def.columns))
-
-            # 给 Test 表加边框
-            test_table_start = start_row_test + 1  # 1-based index including header
+            test_table_start = start_row_test + 1
             test_table_end = test_table_start + len(df_test)
             set_border(test_table_start, test_table_end, 1, len(df_test.columns))
 
-            # 标红逻辑 (Result 列)
-            result_col_idx = df_test.columns.get_loc('result') + 1
+            # 关键修复 3: 调整列宽 (每一列都设为 25)
+            for col_idx in range(1, len(df_test.columns) + 1):
+                col_letter = get_column_letter(col_idx)
+                sheet.column_dimensions[col_letter].width = 25
 
-            # 遍历 Test 表的数据行
+                # 标红逻辑
+            result_col_idx = df_test.columns.get_loc('result') + 1
             for i in range(len(df_test)):
-                row_idx = test_table_start + 1 + i  # 跳过header
+                row_idx = test_table_start + 1 + i
                 cell = sheet.cell(row=row_idx, column=result_col_idx)
                 val_str = str(cell.value)
 
-                # 如果包含 FAIL 或 ERROR，只变字体颜色
                 if val_str.startswith("FAIL") or "Error" in val_str:
-                    # 将整行的字体变红
                     for col in range(1, len(df_test.columns) + 1):
                         sheet.cell(row=row_idx, column=col).font = red_font
 
