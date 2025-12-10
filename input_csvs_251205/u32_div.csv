@@ -1,0 +1,10 @@
+type,,,val,,,,
+zero,,,0x00000000,,,,
+normal,,,0x00000001,,,,
+,,,,,,,
+test,,,,,,,
+x,,y,,exp_out_quotient,exp_out_remainder,test_out_quotient,test_out_remainder
+normal,,normal,,0x00000001,0x00000000,,
+normal,,zero,,0xffffffff,0x00000001,,
+zero,,normal,,0x00000000,0x00000000,,
+zero,,zero,,0xffffffff,0x00000000,,
