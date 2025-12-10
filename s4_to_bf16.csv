@@ -1,0 +1,10 @@
+type,,,val,
+zero,,,0x0,
+normal,,,0x1,
+-normal,,,0xF,
+,,,,
+test,,,,
+x,,exp_out,,test_out
+zero,,0x0000,,
+normal,,0x3f80,,
+-normal,,0xbf80,,

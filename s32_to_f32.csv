@@ -1,0 +1,11 @@
+,,,,
+type,,,val,
+zero,,,0x00000000,
+normal,,,0x00000001,
+-normal,,,0xFFFFFFFF,
+,,,,
+test,,,,
+x,,exp_out,,test_out
+zero,,0x00000000,,
+normal,,0x3f800000,,
+-normal,,0xbf800000,,
