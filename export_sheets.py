@@ -2,7 +2,7 @@ import os
 import pandas as pd
 
 
-def extract_all_sheets_to_csv(excel_path, output_folder="input_csvs"):
+def extract_all_sheets_to_csv(excel_path, output_folder="input_csvs_251223"):
     """
     将 Excel 中的所有 Sheet 导出为单独的 CSV 文件。
     保持原始结构（不添加 Header，不添加 Index）。
@@ -58,6 +58,7 @@ def extract_all_sheets_to_csv(excel_path, output_folder="input_csvs"):
 
 if __name__ == "__main__":
     # 修改这里为你的文件名
-    EXCEL_FILE = "DIP_AIC_LIB_Test_Point.xlsx"
+    # EXCEL_FILE = "DIP_AIC_LIB_Test_Point_251205.xlsx"
+    EXCEL_FILE = "AIC_LIB_test_point_v2.xlsx"
 
     extract_all_sheets_to_csv(EXCEL_FILE)

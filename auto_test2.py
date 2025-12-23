@@ -698,53 +698,53 @@ OP_REGISTRY = [
     # --------------------------
     # --- 浮点互转 (Float <-> Float) ---
     # --- 浮点互转 ---
-    (r".*f32_to_bf16.*", lambda x: x.astype(jnp.bfloat16)),
-    (r".*bf16_to_f32.*", lambda x: x.astype(jnp.float32)),
-    (r".*f32_to_f16.*", lambda x: x.astype(jnp.float16)),
-    (r".*cvt_f16_f32.*", lambda x: x.astype(jnp.float32)),
-    (r".*cvt_bf16_f32.*", lambda x: x.astype(jnp.float32)),
+    (r".*f32_to_bf16.*", lambda x: lax.convert_element_type(x, jnp.bfloat16)),
+    (r".*bf16_to_f32.*", lambda x: lax.convert_element_type(x, jnp.float32)),
+    (r".*f32_to_f16.*", lambda x: lax.convert_element_type(x, jnp.float16)),
+    (r".*cvt_f16_f32.*", lambda x: lax.convert_element_type(x, jnp.float32)),
+    (r".*cvt_bf16_f32.*", lambda x: lax.convert_element_type(x, jnp.float32)),
 
     # --- FP4 (f4e2) 转换 ---
     # JAX + ml_dtypes 现在支持 FP4 转换了！
-    (r".*cvt_bf16_f4e2.*", lambda x: x.astype(ml_dtypes.float4_e2m1fn)),
-    (r".*f4e2_to_bf16.*", lambda x: x.astype(jnp.bfloat16)),  # 反向转换
-    (r".*f4e2_to_f32.*", lambda x: x.astype(jnp.float32)),
+    (r".*cvt_bf16_f4e2.*", lambda x: lax.convert_element_type(x, ml_dtypes.float4_e2m1fn)),
+    (r".*f4e2_to_bf16.*", lambda x: lax.convert_element_type(x, jnp.bfloat16)),  # 反向转换
+    (r".*f4e2_to_f32.*", lambda x: lax.convert_element_type(x, jnp.float32)),
 
     # --- FP8 转换 ---
-    (r".*to_e5m2.*", lambda x: x.astype(ml_dtypes.float8_e5m2)),
-    (r".*to_e4m3.*", lambda x: x.astype(ml_dtypes.float8_e4m3fn)),
+    (r".*to_e5m2.*", lambda x: lax.convert_element_type(x, ml_dtypes.float8_e5m2)),
+    (r".*to_e4m3.*", lambda x: lax.convert_element_type(x, ml_dtypes.float8_e4m3fn)),
 
     # --- 整数位数转换 (Signed) ---
-    (r".*cvt_s16_s32.*", lambda x: x.astype(jnp.int32)),
-    (r".*cvt_s8_s32.*", lambda x: x.astype(jnp.int32)),
+    (r".*cvt_s16_s32.*", lambda x: lax.convert_element_type(x, jnp.int32)),
+    (r".*cvt_s8_s32.*", lambda x: lax.convert_element_type(x, jnp.int32)),
     # Native int4 support!
-    (r".*cvt_s4_s8.*", lambda x: x.astype(jnp.int8)),  # int4 -> int8 (Sign Ext)
-    (r".*cvt_s2_s4.*", lambda x: x.astype(ml_dtypes.int4)),  # int2 -> int4 (Sign Ext)
-    (r".*cvt_s1_s2.*", lambda x: x.astype(ml_dtypes.int2)),  # S1 -> int2
+    (r".*cvt_s4_s8.*", lambda x: lax.convert_element_type(x, jnp.int8)),  # int4 -> int8 (Sign Ext)
+    (r".*cvt_s2_s4.*", lambda x: lax.convert_element_type(x, ml_dtypes.int4)),  # int2 -> int4 (Sign Ext)
+    (r".*cvt_s1_s2.*", lambda x: lax.convert_element_type(x, ml_dtypes.int2)),  # S1 -> int2
 
     # --- 位宽转换 (Raw Bits / Unsigned) ---
-    (r".*cvt_b32_b16.*", lambda x: x.astype(jnp.uint16)),
-    (r".*cvt_b16_b8.*", lambda x: x.astype(jnp.uint8)),
+    (r".*cvt_b32_b16.*", lambda x: lax.convert_element_type(x, jnp.uint16)),
+    (r".*cvt_b16_b8.*", lambda x: lax.convert_element_type(x, jnp.uint8)),
     # B8 -> B4 (使用 native uint4)
-    (r".*cvt_b8_b4.*", lambda x: x.astype(ml_dtypes.uint4)),
+    (r".*cvt_b8_b4.*", lambda x: lax.convert_element_type(x, ml_dtypes.uint4)),
     # B4 -> B8 (Zero Ext)
-    (r".*cvt_b4_b8.*", lambda x: x.astype(jnp.uint8)),
+    (r".*cvt_b4_b8.*", lambda x: lax.convert_element_type(x, jnp.uint8)),
     # B4 -> B2 (Truncation)
-    (r".*cvt_b4_b2.*", lambda x: x.astype(ml_dtypes.uint2)),
+    (r".*cvt_b4_b2.*", lambda x: lax.convert_element_type(x, ml_dtypes.uint2)),
     # B2 -> B4 (Zero Ext)
-    (r".*cvt_b2_b4.*", lambda x: x.astype(ml_dtypes.uint4)),
+    (r".*cvt_b2_b4.*", lambda x: lax.convert_element_type(x, ml_dtypes.uint4)),
     # B2 -> B1 (使用 uint2 模拟 B1，或截断)
-    (r".*cvt_b2_b1.*", lambda x: x.astype(ml_dtypes.uint2)),  # 暂时 map 到 u2
+    (r".*cvt_b2_b1.*", lambda x: lax.convert_element_type(x, ml_dtypes.uint2)),  # 暂时 map 到 u2
 
     # --- Float <-> Int/u4/s4 ---
-    (r".*f32_to_s32.*", lambda x: x.astype(jnp.int32)),
-    (r".*f32_to_s4.*", lambda x: x.astype(ml_dtypes.int4)),  # 真正的 float->int4
-    (r".*s32_to_f32.*", lambda x: x.astype(jnp.float32)),
-    (r".*to_u8.*", lambda x: x.astype(jnp.uint8)),
-    (r".*to_s8.*", lambda x: x.astype(jnp.int8)),
-    (r".*to_u4.*", lambda x: x.astype(ml_dtypes.uint4)),
-    (r".*to_s4.*", lambda x: x.astype(ml_dtypes.int4)),
-    (r".*to_bf16.*", lambda x: x.astype(jnp.bfloat16)),
+    (r".*f32_to_s32.*", lambda x: lax.convert_element_type(x, jnp.int32)),
+    (r".*f32_to_s4.*", lambda x: lax.convert_element_type(x, ml_dtypes.int4)),  # 真正的 float->int4
+    (r".*s32_to_f32.*", lambda x: lax.convert_element_type(x, jnp.float32)),
+    (r".*to_u8.*", lambda x: lax.convert_element_type(x, jnp.uint8)),
+    (r".*to_s8.*", lambda x: lax.convert_element_type(x, jnp.int8)),
+    (r".*to_u4.*", lambda x: lax.convert_element_type(x, ml_dtypes.uint4)),
+    (r".*to_s4.*", lambda x: lax.convert_element_type(x, ml_dtypes.int4)),
+    (r".*to_bf16.*", lambda x: lax.convert_element_type(x, jnp.bfloat16)),
 ]
 
 
@@ -854,9 +854,9 @@ def run_single_file(filepath, output_dir):
         def dynamic_cvt(x, y=None):
             # Try/Except 增强鲁棒性
             try:
-                return x.astype(dst_dtype)
-            except:
                 return lax.convert_element_type(x, dst_dtype)
+            except:
+                return x.astype(dst_dtype)
 
         op_func = dynamic_cvt
 
@@ -1064,8 +1064,8 @@ def main():
         print("   Bitwise results (especially NaN/subnormals) may differ from hardware spec.")
     print("=" * 60 + "\n")
 
-    input_dir = "./input_csvs_251205"
-    output_dir = "./test_results_251209_cpu"
+    input_dir = "./input_csvs_251223"
+    output_dir = "./test_results_251223_tpu"
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
