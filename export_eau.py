@@ -9,7 +9,7 @@ def sanitize_filename(name):
     return name.strip()
 
 
-def export_sheets(excel_path, output_folder="input_eau_251223"):
+def export_sheets(excel_path, output_folder="input_exp2_260105"):
     if not os.path.exists(excel_path):
         print(f"Error: File {excel_path} not found.")
         return
@@ -42,5 +42,5 @@ def export_sheets(excel_path, output_folder="input_eau_251223"):
 
 if __name__ == "__main__":
     # 你的文件名
-    EXCEL_FILE = "EAU_test_data2.xlsx"
+    EXCEL_FILE = "EAU_exp2_test.xlsx"
     export_sheets(EXCEL_FILE)
