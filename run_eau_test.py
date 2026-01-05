@@ -13,6 +13,10 @@ from openpyxl.utils import get_column_letter
 # 设置 JAX 平台
 # os.environ['JAX_PLATFORM_NAME'] = 'tpu'
 
+def _exp2_wrapper(x, accuracy_mode='high'):
+  # TODO: Implement accuracy logic based on accuracy_mode
+  return lax.exp2_p.bind(x, accuracy=accuracy_mode)    # 'high', 'default', 'highest'
+
 def op_sigshft(x):
     """
     User definition: 0.5 * tanh(x / 2)
