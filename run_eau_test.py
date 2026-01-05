@@ -43,8 +43,8 @@ from openpyxl.utils import get_column_letter
 # 设置 JAX 平台
 # os.environ['JAX_PLATFORM_NAME'] = 'tpu'
 
-def _exp2_wrapper(x, accuracy_mode='high'):
-  return lax.exp2_p.bind(x, accuracy=accuracy_mode)    # 'high', 'default', 'highest'
+def _exp2_wrapper(x, accuracy_mode=None):
+  return lax.exp2_p.bind(x, accuracy=accuracy_mode)    # None, lax.AccuracyMode.DEFAULT, lax.AccuracyMode.HIGHEST
 
 def op_sigshft(x):
     """
@@ -58,12 +58,9 @@ def export_exp2_hlo_variants_tpu():
     针对 TPU 触发编译，生成 .txt 和 .dot 到 xla_dump_debug 文件夹
     """
     print(f"\n--- Triggering XLA Compilation for exp2 (Check folder: {XLA_DUMP_DIR}) ---")
-    
-    modes = [
-        None, 
-        lax.AccuracyMode.DEFAULT, 
-        lax.AccuracyMode.HIGHEST
-    ]
+
+    # None, lax.AccuracyMode.DEFAULT, lax.AccuracyMode.HIGHEST
+    modes = [None]
     
     # 构造 Dummy Input
     dummy_input = jnp.array([1.5, -2.0, 0.0], dtype=jnp.float32)
