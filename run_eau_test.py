@@ -2,6 +2,36 @@ import os
 import glob
 import pandas as pd
 import numpy as np
+import shutil
+from functools import partial
+
+# ==========================================
+# [关键步骤] 1. 配置 XLA Dump 环境变量
+# ==========================================
+# 必须在 import jax 或调用 jax 相关函数之前设置
+# 这样 XLA 编译器初始化时才会读取这些 Flag
+
+# 定义 dump 根目录
+XLA_DUMP_DIR = "xla_dump_debug"
+
+# 清理旧的 dump 目录以防混淆
+if os.path.exists(XLA_DUMP_DIR):
+    shutil.rmtree(XLA_DUMP_DIR)
+os.makedirs(XLA_DUMP_DIR)
+
+# 设置 XLA FLAGS
+# --xla_dump_to: 输出目录
+# --xla_dump_hlo_as_text: 输出文本格式
+# --xla_dump_hlo_as_dot: 输出 GraphViz dot 格式
+# --xla_dump_hlo_pass_re: 正则表达式，过滤只输出关键步骤 (如 '.*' 输出所有步骤，或 'optimized' 只输出优化后)
+os.environ['XLA_FLAGS'] = (
+    f"--xla_dump_to={XLA_DUMP_DIR} "
+    "--xla_dump_hlo_as_text "
+    "--xla_dump_hlo_as_dot "
+    # "--xla_dump_hlo_pass_re=.*" # 如果文件太多，可以注释掉这行，默认通常会输出 before_optimizations 和 optimized
+)
+
+
 import jax
 import jax.numpy as jnp
 from jax import lax
@@ -14,7 +44,6 @@ from openpyxl.utils import get_column_letter
 # os.environ['JAX_PLATFORM_NAME'] = 'tpu'
 
 def _exp2_wrapper(x, accuracy_mode='high'):
-  # TODO: Implement accuracy logic based on accuracy_mode
   return lax.exp2_p.bind(x, accuracy=accuracy_mode)    # 'high', 'default', 'highest'
 
 def op_sigshft(x):
@@ -23,6 +52,44 @@ def op_sigshft(x):
     This is a shifted/scaled sigmoid-like function, range (-0.5, 0.5).
     """
     return 0.5 * jnp.tanh(x / 2.0)
+
+def export_exp2_hlo_variants_tpu():
+    """
+    针对 TPU 触发编译，生成 .txt 和 .dot 到 xla_dump_debug 文件夹
+    """
+    print(f"\n--- Triggering XLA Compilation for exp2 (Check folder: {XLA_DUMP_DIR}) ---")
+    
+    modes = ['default', 'high', 'highest']
+    # 构造 Dummy Input
+    dummy_input = jnp.array([1.5, -2.0, 0.0], dtype=jnp.float32)
+    
+    for mode in modes:
+        print(f"  > Compiling mode: {mode} ...")
+        
+        # 1. 构造特定 mode 的函数
+        func = partial(_exp2_wrapper, accuracy_mode=mode)
+        jit_func = jax.jit(func)
+        
+        try:
+            # 2. Lowering
+            lowered = jit_func.lower(dummy_input)
+            
+            # 3. Compile (关键！)
+            # 只有调用 compile()，XLA 才会执行优化管道并根据环境变量 dump 文件
+            compiled = lowered.compile()
+            
+            # 为了方便区分，我们可以在这里手动重命名或移动生成的 dump 文件
+            # 但由于 XLA 是异步且文件名是哈希/ID生成的，这比较难自动化。
+            # 建议的策略是：每运行一次 mode，手动去文件夹看生成的时间戳最新的文件。
+            # 或者在这里简单的打印一下："Compilation done."
+            
+        except Exception as e:
+            print(f"  [Error] Compilation failed for {mode}: {e}")
+
+    print(f"  -> All dumps saved to ./{XLA_DUMP_DIR}/")
+    print("     You will see files like 'module_000x.optimized_module.dot'")
+    print("----------------------------------------------------\n")
+
 
 # ==========================================
 # 1. 算子映射表
@@ -187,8 +254,8 @@ def main():
     print(f"Running on: {devices}")
     print("=" * 60 + "\n")
 
-    input_dir = "input_eau_251223"
-    output_dir = "result_eau_251223"
+    input_dir = "input_eau_260105"
+    output_dir = "result_eau_260105"
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -199,6 +266,8 @@ def main():
     for f in files:
         process_file(f, output_dir)
 
+    # 导出 XLA Dumps (txt + dot)
+    export_exp2_hlo_variants_tpu()
 
 if __name__ == "__main__":
     main()
