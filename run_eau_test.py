@@ -28,7 +28,7 @@ def op_sigshft(x):
 # 1. 算子映射表
 # ==========================================
 OP_MAP = {
-    'exp2': jnp.exp2,
+    'exp2': _exp2_wrapper,
     'log2': jnp.log2,
     'rcp': jnp.reciprocal,
     'rsqrt': lax.rsqrt,
