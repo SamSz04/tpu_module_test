@@ -13,23 +13,30 @@ from functools import partial
 
 # 定义 dump 根目录
 XLA_DUMP_DIR = "xla_dump_debug"
+XLA_JF_DUMP_DIR = "xla_jf_dump_debug"
 
 # 清理旧的 dump 目录以防混淆
-if os.path.exists(XLA_DUMP_DIR):
-    shutil.rmtree(XLA_DUMP_DIR)
-os.makedirs(XLA_DUMP_DIR)
+# if os.path.exists(XLA_DUMP_DIR):
+#     shutil.rmtree(XLA_DUMP_DIR)
+# os.makedirs(XLA_DUMP_DIR)
+
+if os.path.exists(XLA_JF_DUMP_DIR):
+    shutil.rmtree(XLA_JF_DUMP_DIR)
+os.makedirs(XLA_JF_DUMP_DIR)
 
 # 设置 XLA FLAGS
 # --xla_dump_to: 输出目录
 # --xla_dump_hlo_as_text: 输出文本格式
 # --xla_dump_hlo_as_dot: 输出 GraphViz dot 格式
 # --xla_dump_hlo_pass_re: 正则表达式，过滤只输出关键步骤 (如 '.*' 输出所有步骤，或 'optimized' 只输出优化后)
-os.environ['XLA_FLAGS'] = (
-    f"--xla_dump_to={XLA_DUMP_DIR} "
-    "--xla_dump_hlo_as_text "
-    "--xla_dump_hlo_as_dot "
-    # "--xla_dump_hlo_pass_re=.*" # 如果文件太多，可以注释掉这行，默认通常会输出 before_optimizations 和 optimized
-)
+# os.environ['XLA_FLAGS'] = (
+#     f"--xla_dump_to={XLA_DUMP_DIR} "
+#     "--xla_dump_hlo_as_text "
+#     "--xla_dump_hlo_as_dot "
+# )
+
+os.environ['LIBTPU_INIT_ARGS'] = f"--xla_jf_dump_to={XLA_JF_DUMP_DIR}"
+print(f"Set LIBTPU_INIT_ARGS to: {os.environ['LIBTPU_INIT_ARGS']}")
 
 
 import jax
