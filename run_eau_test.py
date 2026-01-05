@@ -77,12 +77,7 @@ def export_exp2_hlo_variants_tpu():
             # 3. Compile (关键！)
             # 只有调用 compile()，XLA 才会执行优化管道并根据环境变量 dump 文件
             compiled = lowered.compile()
-            
-            # 为了方便区分，我们可以在这里手动重命名或移动生成的 dump 文件
-            # 但由于 XLA 是异步且文件名是哈希/ID生成的，这比较难自动化。
-            # 建议的策略是：每运行一次 mode，手动去文件夹看生成的时间戳最新的文件。
-            # 或者在这里简单的打印一下："Compilation done."
-            
+
         except Exception as e:
             print(f"  [Error] Compilation failed for {mode}: {e}")
 
