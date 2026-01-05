@@ -59,7 +59,12 @@ def export_exp2_hlo_variants_tpu():
     """
     print(f"\n--- Triggering XLA Compilation for exp2 (Check folder: {XLA_DUMP_DIR}) ---")
     
-    modes = ['default', 'high', 'highest']
+    modes = [
+        None, 
+        lax.AccuracyMode.DEFAULT, 
+        lax.AccuracyMode.HIGHEST
+    ]
+    
     # 构造 Dummy Input
     dummy_input = jnp.array([1.5, -2.0, 0.0], dtype=jnp.float32)
     
