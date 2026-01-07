@@ -93,7 +93,8 @@ def export_exp2_hlo_variants_tpu():
 # 1. 算子映射表
 # ==========================================
 OP_MAP = {
-    'exp2': _exp2_wrapper,
+    # 'exp2': _exp2_wrapper,
+    "exp2": lax.exp2,
     "log2": lambda x: lax.div(lax.log(x), lax.log(2.0)),
     "rcp": lax.reciprocal,
     "rsqrt": lax.rsqrt,
