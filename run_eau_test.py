@@ -53,12 +53,6 @@ from openpyxl.utils import get_column_letter
 def _exp2_wrapper(x, accuracy_mode=None):
   return lax.exp2_p.bind(x, accuracy=accuracy_mode)    # None, lax.AccuracyMode.DEFAULT, lax.AccuracyMode.HIGHEST
 
-def op_sigshft(x):
-    """
-    User definition: 0.5 * tanh(x / 2)
-    This is a shifted/scaled sigmoid-like function, range (-0.5, 0.5).
-    """
-    return 0.5 * jnp.tanh(x / 2.0)
 
 def export_exp2_hlo_variants_tpu():
     """
@@ -100,14 +94,14 @@ def export_exp2_hlo_variants_tpu():
 # ==========================================
 OP_MAP = {
     'exp2': _exp2_wrapper,
-    'log2': jnp.log2,
-    'rcp': jnp.reciprocal,
-    'rsqrt': lax.rsqrt,
-    'sin': jnp.sin,
-    'cos': jnp.cos,
-    'tanh': jnp.tanh,
-    'erf': lax.erf,
-    'sigshft': op_sigshft,
+    "log2": lambda x: lax.div(lax.log(x), lax.log(2.0)),
+    "rcp": lax.reciprocal,
+    "rsqrt": lax.rsqrt,
+    "sin": lax.sin,
+    "cos": lax.cos,
+    "tanh": lax.tanh,
+    "erf": lax.erf,
+    "sigshft": lambda x: 0.5 * lax.tanh(x / 2.0),
 }
 
 
